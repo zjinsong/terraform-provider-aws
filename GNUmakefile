@@ -12,6 +12,7 @@ build: fmtcheck
 	go install
 
 gen:
+	rm -f aws/*_gen.go aws/*_gen_test.go
 	rm -f aws/internal/keyvaluetags/*_gen.go
 	go generate ./...
 
