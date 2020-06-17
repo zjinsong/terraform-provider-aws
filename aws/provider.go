@@ -559,6 +559,7 @@ func Provider() terraform.ResourceProvider {
 			"aws_ecs_capacity_provider":                               resourceAwsEcsCapacityProvider(),
 			"aws_ecs_cluster":                                         resourceAwsEcsCluster(),
 			"aws_ecs_service":                                         resourceAwsEcsService(),
+			"aws_ecs_tag":                                             resourceAwsEcsTag(),
 			"aws_ecs_task_definition":                                 resourceAwsEcsTaskDefinition(),
 			"aws_efs_access_point":                                    resourceAwsEfsAccessPoint(),
 			"aws_efs_file_system":                                     resourceAwsEfsFileSystem(),
