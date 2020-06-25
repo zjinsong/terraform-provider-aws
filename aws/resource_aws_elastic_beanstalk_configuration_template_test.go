@@ -153,7 +153,7 @@ resource "aws_elastic_beanstalk_application" "tftest" {
 resource "aws_elastic_beanstalk_configuration_template" "tf_template" {
   name                = "tf-test-template-config"
   application         = "${aws_elastic_beanstalk_application.tftest.name}"
-  solution_stack_name = "64bit Amazon Linux running Python"
+  solution_stack_name = "64bit Amazon Linux 2018.03 v2.9.11 running Python 3.6"
 }
 `, r, r)
 }
@@ -186,7 +186,7 @@ resource "aws_elastic_beanstalk_configuration_template" "tf_template" {
   name        = "tf-test-%s"
   application = "${aws_elastic_beanstalk_application.tftest.name}"
 
-  solution_stack_name = "64bit Amazon Linux running Python"
+  solution_stack_name = "64bit Amazon Linux 2018.03 v2.9.11 running Python 3.6"
 
   setting {
     namespace = "aws:ec2:vpc"
@@ -214,7 +214,7 @@ resource "aws_elastic_beanstalk_configuration_template" "tf_template" {
   name        = "tf-test-%s"
   application = "${aws_elastic_beanstalk_application.tftest.name}"
 
-  solution_stack_name = "64bit Amazon Linux running Python"
+  solution_stack_name = "64bit Amazon Linux 2018.03 v2.9.11 running Python 3.6"
 
   setting {
     namespace = "aws:autoscaling:launchconfiguration"
