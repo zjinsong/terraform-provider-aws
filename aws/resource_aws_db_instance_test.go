@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"regexp"
+	"sync"
 	"testing"
 	"time"
 
@@ -24,6 +25,28 @@ func init() {
 	})
 }
 
+func testSweepDbInstancesWorker(workerID int, conn *rds.RDS, jobs <-chan string, wg *sync.WaitGroup) {
+	defer wg.Done()
+
+	for instanceID := range jobs {
+		log.Printf("[INFO] Deleting DB instance (worker %v): %s", workerID, instanceID)
+
+		_, err := conn.DeleteDBInstance(&rds.DeleteDBInstanceInput{
+			DBInstanceIdentifier: aws.String(instanceID),
+			SkipFinalSnapshot:    aws.Bool(true),
+		})
+		if err != nil {
+			log.Printf("[ERROR] Failed to delete DB instance %s (worker %v): %s", instanceID, workerID, err)
+			continue
+		}
+
+		err = waitUntilAwsDbInstanceIsDeleted(instanceID, conn, 40*time.Minute)
+		if err != nil {
+			log.Printf("[ERROR] Failure while waiting for DB instance %s to be deleted (worker %v): %s", instanceID, workerID, err)
+		}
+	}
+}
+
 func testSweepDbInstances(region string) error {
 	client, err := sharedClientForRegion(region)
 	if err != nil {
@@ -31,25 +54,18 @@ func testSweepDbInstances(region string) error {
 	}
 	conn := client.(*AWSClient).rdsconn
 
+	maxJobs := 20
+	var wg sync.WaitGroup
+	jobs := make(chan string, maxJobs)
+
+	for workerID := 0; workerID < maxJobs; workerID++ {
+		wg.Add(1)
+		go testSweepDbInstancesWorker(workerID, conn, jobs, &wg)
+	}
+
 	err = conn.DescribeDBInstancesPages(&rds.DescribeDBInstancesInput{}, func(out *rds.DescribeDBInstancesOutput, lastPage bool) bool {
 		for _, dbi := range out.DBInstances {
-			log.Printf("[INFO] Deleting DB instance: %s", *dbi.DBInstanceIdentifier)
-
-			_, err := conn.DeleteDBInstance(&rds.DeleteDBInstanceInput{
-				DBInstanceIdentifier: dbi.DBInstanceIdentifier,
-				SkipFinalSnapshot:    aws.Bool(true),
-			})
-			if err != nil {
-				log.Printf("[ERROR] Failed to delete DB instance %s: %s",
-					*dbi.DBInstanceIdentifier, err)
-				continue
-			}
-
-			err = waitUntilAwsDbInstanceIsDeleted(*dbi.DBInstanceIdentifier, conn, 40*time.Minute)
-			if err != nil {
-				log.Printf("[ERROR] Failure while waiting for DB instance %s to be deleted: %s",
-					*dbi.DBInstanceIdentifier, err)
-			}
+			jobs <- aws.StringValue(dbi.DBInstanceIdentifier)
 		}
 		return !lastPage
 	})
@@ -60,6 +76,9 @@ func testSweepDbInstances(region string) error {
 		}
 		return fmt.Errorf("Error retrieving DB instances: %s", err)
 	}
+
+	close(jobs)
+	wg.Wait()
 
 	return nil
 }
