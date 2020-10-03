@@ -38,11 +38,22 @@ resource "aws_iam_role_policy_attachment" "demo-node-AmazonEC2ContainerRegistryR
   role       = aws_iam_role.demo-node.name
 }
 
+data "aws_ami" "eks_ami" {
+  filter {
+    name   = "name"
+    values = ["amazon-eks-node-1.15-v*"]
+  }
+
+  most_recent = true
+  owners      = ["961992271922"] # Amazon EKS AMI Account ID
+}
+
 resource "aws_eks_node_group" "demo" {
   cluster_name    = aws_eks_cluster.demo.name
   node_group_name = "demo"
   node_role_arn   = aws_iam_role.demo-node.arn
   subnet_ids      = aws_subnet.demo[*].id
+  cluster_instance_ami = "${data.aws_ami.eks_ami.id}"
 
   scaling_config {
     desired_size = 1
