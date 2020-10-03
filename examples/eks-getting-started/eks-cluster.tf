@@ -25,12 +25,12 @@ POLICY
 }
 
 resource "aws_iam_role_policy_attachment" "demo-cluster-AmazonEKSClusterPolicy" {
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
+  policy_arn = "arn:aws-cn:iam::aws:policy/AmazonEKSClusterPolicy"
   role       = aws_iam_role.demo-cluster.name
 }
 
 resource "aws_iam_role_policy_attachment" "demo-cluster-AmazonEKSVPCResourceController" {
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSVPCResourceController"
+  policy_arn = "arn:aws-cn:iam::aws:policy/AmazonEKSVPCResourceController"
   role       = aws_iam_role.demo-cluster.name
 }
 
@@ -63,6 +63,7 @@ resource "aws_security_group_rule" "demo-cluster-ingress-workstation-https" {
 
 resource "aws_eks_cluster" "demo" {
   name     = var.cluster-name
+  version = "1.14"
   role_arn = aws_iam_role.demo-cluster.arn
 
   vpc_config {
